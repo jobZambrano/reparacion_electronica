@@ -10,11 +10,13 @@ app.use(express.json());
 //importar rutas
 const authRoutes = require('./routes/auth');
 const tecnicosRoutes = require('./routes/tecnicos');
+const serviciosRoutes = require('./routes/servicios');
 const clientesRoutes = require('./routes/clientes');
 
 // usar las rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/tecnicos', tecnicosRoutes);
+app.use('/api/servicios', serviciosRoutes);
 app.use('/api/clientes', clientesRoutes);
 //ruta de ejemplo
 app.get('/', (req, res) => {
