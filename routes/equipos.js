@@ -4,16 +4,16 @@ const db = require('../db');
 const { verifyToken } = require('../utils/auth');
 
 //Metodo get para registro unico
-router.get('/:id', verifyToken, (req, res)=>{
+router.get('/:id', verifyToken, (req, res) => {
     const { id } = req.params;//Capturar el id desde los parametros de la URL
     const query = 'SELECT * FROM equipos WHERE id_equ = ?;';
     db.query(query, [id], (err, results) => {
         if (err) {
             console.error(err);
-            return res.status(500).json({error: 'Error al obtener el equipo'})
+            return res.status(500).json({ error: 'Error al obtener el equipo' })
         }
         if (results.length === 0) {
-            return res.status(404).json({error: 'Equipo no encontrado'})
+            return res.status(404).json({ error: 'Equipo no encontrado' })
         }
         res.json(results[0]);
     });
@@ -29,7 +29,7 @@ router.get('/', verifyToken, (req, res) => {
     let whereClause = '';
     let queryParams = [];
     if (cadena) {
-        whereClause= 'where tipo_equ like ? or marca_equ like ? or modelo_equ like ?';
+        whereClause = 'where tipo_equ like ? or marca_equ like ? or modelo_equ like ?';
         const searchTerm = `%${cadena}%`;
         queryParams.push(searchTerm, searchTerm, searchTerm)
     }
@@ -45,7 +45,8 @@ router.get('/', verifyToken, (req, res) => {
         const totalPages = Math.ceil(totalTecnicos / limit);
 
         // consulta para obtener los registros de la página
-        const tecnicosQuery = `SELECT * FROM equipos ${whereClause} LIMIT ? OFFSET ?`;
+        //const tecnicosQuery = `SELECT id_equ, tipo_equ, marca_equ, modelo_equ, serie_equ, id_cli, nombre_cli FROM equipos INNER JOIN clientes ON id_cli = id_cli ${whereClause} LIMIT ? OFFSET ?`;
+        const tecnicosQuery = `SELECT  e.id_equ, e.tipo_equ, e.marca_equ, e.modelo_equ, e.serie_equ, e.id_cli,  c.nombre_cli FROM equipos e INNER JOIN clientes c ON e.id_cli = c.id_cli ${whereClause} LIMIT ? OFFSET ?`;
         queryParams.push(limit, offset);
         db.query(tecnicosQuery, queryParams, (err, tecnicosResult) => {
             if (err) {
@@ -66,25 +67,25 @@ router.get('/', verifyToken, (req, res) => {
 });
 
 //Metodo post
-router.post('/', verifyToken, (req, res)=>{
+router.post('/', verifyToken, (req, res) => {
     //Obtener los datos
-    const {tipo_equ, marca_equ, modelo_equ, serie_equ, id_cli} =req.body;
+    const { tipo_equ, marca_equ, modelo_equ, serie_equ, id_cli } = req.body;
     const search_query = 'select count(*) as contador from equipos where serie_equ = ?;';
-    db.query(search_query, [serie_equ], (err, search_result)=>{
-        if(err){
+    db.query(search_query, [serie_equ], (err, search_result) => {
+        if (err) {
             console.error(err);
-            return res.status(500).json({error: 'Error interno al verificar el equipo'});
+            return res.status(500).json({ error: 'Error interno al verificar el equipo' });
         }
-        if(search_result[0].contador > 0){
-            return res.status(409).json({error: 'El equipo ya existe'});
+        if (search_result[0].contador > 0) {
+            return res.status(409).json({ error: 'El equipo ya existe' });
         }
     })
     const query = 'INSERT INTO equipos values (null, ?, ?, ?, ?, ?);';
     const values = [tipo_equ, marca_equ, modelo_equ, serie_equ, id_cli];
-    db.query(query, values, (err, result)=>{
-        if(err){
+    db.query(query, values, (err, result) => {
+        if (err) {
             console.error(err);
-            return res.status(500).json({error: 'Error al insertar el equipo'});
+            return res.status(500).json({ error: 'Error al insertar el equipo' });
         }
         res.status(201).json({
             message: 'Equipo insertado correctamente',
@@ -94,15 +95,15 @@ router.post('/', verifyToken, (req, res)=>{
 });
 
 //MÉTODO PUT
-router.put('/:id', verifyToken, (req, res)=>{
+router.put('/:id', verifyToken, (req, res) => {
     const { id } = req.params;//Capturar el id desde los parametros de la URL
-    const {tipo_equ, marca_equ, modelo_equ, serie_equ, id_cli} =req.body;
+    const { tipo_equ, marca_equ, modelo_equ, serie_equ, id_cli } = req.body;
     const query = 'UPDATE equipos set tipo_equ = ?, marca_equ = ?, modelo_equ = ?, serie_equ = ?, id_cli = ? WHERE id_equ = ?;';
     const values = [tipo_equ, marca_equ, modelo_equ, serie_equ, id_cli, id];
-    db.query(query, values, (err, result)=>{
-        if(err){
+    db.query(query, values, (err, result) => {
+        if (err) {
             console.error(err);
-            return res.status(500).json({error: 'Error al actualizar el equipo'});
+            return res.status(500).json({ error: 'Error al actualizar el equipo' });
         }
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'Equipo no encontrado' });
@@ -115,30 +116,30 @@ router.put('/:id', verifyToken, (req, res)=>{
 
 //MÉTODO DELETE
 router.delete('/:id', verifyToken, (req, res) => {
-  const { id } = req.params;
-   const search_query = 'select count(*) as contador from detalle_orden where id_equ = ?;';
-    db.query(search_query, [id], (err, search_result)=>{
-        if(err){
+    const { id } = req.params;
+    const search_query = 'select count(*) as contador from detalle_orden where id_equ = ?;';
+    db.query(search_query, [id], (err, search_result) => {
+        if (err) {
             console.error(err);
-            return res.status(500).json({error: 'Error interno al verificar el detalle de orden'});
+            return res.status(500).json({ error: 'Error interno al verificar el detalle de orden' });
         }
-        if(search_result[0].contador > 0){
-            return res.status(409).json({error: 'El equipo no se puede eliminar porque está asociado a una orden de trabajo'});
+        if (search_result[0].contador > 0) {
+            return res.status(409).json({ error: 'El equipo no se puede eliminar porque está asociado a una orden de trabajo' });
         }
         const query = 'DELETE FROM equipos WHERE id_equ = ?';
         const values = [id];
         db.query(query, values, (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.status(500).json({ error: 'Error al eliminar equipo' });
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ mensaje: 'Equipo no encontrado' });
-    }
-    res.status(200).json({ mensaje: 'Equipo eliminado correctamente' });
-    });
+            if (err) {
+                console.log(err);
+                return res.status(500).json({ error: 'Error al eliminar equipo' });
+            }
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ mensaje: 'Equipo no encontrado' });
+            }
+            res.status(200).json({ mensaje: 'Equipo eliminado correctamente' });
+        });
     })
-  
+
 });
 
-module.exports= router;
+module.exports = router;
